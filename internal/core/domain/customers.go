@@ -3,6 +3,9 @@ package domain
 import (
 	"math"
 	"strconv"
+	"strings"
+	"net"
+	"regexp"
 )
 
 const (
@@ -48,12 +51,29 @@ func (c Customer) Validate() error {
 	return nil
 }
 
-// Validate Custumer Name
+// Validate customer name. 
+// It should have more than a word and the first and last name should have more than a char
 func (c Customer) IsValidName() bool {
-	return c.Name != ""
+	// validate if it is not blank
+	if c.Name == "" {
+		return false
+	}
+	// validade more than one name and the first and last have more then a char
+	s := strings.Split(c.Name, " ")
+	if len(s) < 2 {
+		return false
+	}
+	if len(s[0]) < 2 {
+		return false
+	}
+	if len(s[len(s)-1]) < 2 {
+		return false
+	}
+	return true
 }
 
 // Verify if document is a valid brasilian CPF (private individual document)
+// It validate two last digits with mod 11 algorithm
 func (c Customer) IsDocumentCPF() bool {
 	// valid is not zero
 	if c.Document == 0 {
@@ -64,7 +84,7 @@ func (c Customer) IsDocumentCPF() bool {
 	if len < cpf_min_length || len > cpf_max_length {
 		return false
 	}
-	// valid digit 1
+	// valid check digits (2 last digits)
 	dig1 := int(c.Document%100/10)
 	dig2 := int(c.Document%10)
 	val1 := 0
@@ -81,6 +101,7 @@ func (c Customer) IsDocumentCPF() bool {
 }
 
 // Verify if document is a valid brasilian CNPJ (legal entity document)
+// It validate two last digits with mod 11 algorithm
 func (c Customer) IsDocumentCNPJ() bool {
 	// valid is not zero
 	if c.Document == 0 {
@@ -91,7 +112,7 @@ func (c Customer) IsDocumentCNPJ() bool {
 	if len < cnpj_min_length || len > cnpj_max_length {
 		return false
 	}
-	// valid digit 1
+	// valid check digits (2 last digits)
 	dig1 := int(c.Document%100/10)
 	dig2 := int(c.Document%10)
 	val1 := 0
@@ -115,6 +136,31 @@ func (c Customer) IsDocumentCNPJ() bool {
 	return val1 == dig1 && val2 == dig2
 }
 
+// Validate customer document
+// It should be a Brasilian CPF(private individual document) or a CNPJ(legal entity document) 
 func (c Customer) IsValidDocument() bool {
 	return c.IsDocumentCPF() || c.IsDocumentCNPJ()
+}
+
+// Validate customer email address string structure with go mail package
+func (c Customer) IsValidEmail() bool {
+		// validate if it is not blank
+	if c.Email == "" {
+		return false
+	}
+	// validate structure
+	e := c.Email
+	if len(e) < 3 && len(e) > 254 {
+		return false
+	}
+	var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	if !emailRegex.MatchString(e) {
+		return false
+	}
+	parts := strings.Split(e, "@")
+	mx, err := net.LookupMX(parts[1])
+	if err != nil || len(mx) == 0 {
+		return false
+	}
+	return true
 }

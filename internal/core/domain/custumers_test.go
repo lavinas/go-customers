@@ -67,3 +67,24 @@ func TestIsValidDocument (t *testing.T) {
 	x = c.IsDocumentCPF()
 	assert.False(t, x)
 }
+
+func TestIsValidEmail (t *testing.T) {
+	var c = Customer{Email: "teste@gmail.com"}
+	x := c.IsValidEmail()
+	assert.True(t, x)
+	c = Customer{Email: "teste"}
+	x = c.IsValidEmail()
+	assert.False(t, x)
+	c = Customer{Email: "teste@"}
+	x = c.IsValidEmail()
+	assert.False(t, x)
+	c = Customer{Email: "teste@g"}
+	x = c.IsValidEmail()
+	assert.False(t, x)
+	c = Customer{Email: "teste@g.r"}
+	x = c.IsValidEmail()
+	assert.False(t, x)
+	c = Customer{Email: "lavinas@me.com"}
+	x = c.IsValidEmail()
+	assert.True(t, x)
+}
