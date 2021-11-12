@@ -45,7 +45,7 @@ type Customer struct {
 	// the cell number for this client in the i164 pattern
 	// required: false
 	Phone uint64 `json:"phone"`
-	// the unified password for this client
+	// the unified master password for this Custumer
 	// required: false
 	Password string `json:"password"`
 }
@@ -146,7 +146,7 @@ func (c Customer) IsValidDocument() bool {
 	return c.IsDocumentCPF() || c.IsDocumentCNPJ()
 }
 
-// Validate customer email address string structure with go mail package
+// Validate customer email address string
 func (c Customer) IsValidEmail() bool {
 		// validate if it is not blank
 	if c.Email == "" {
@@ -169,3 +169,9 @@ func (c Customer) IsValidEmail() bool {
 	}
 	return true
 }
+
+// Validate phone number
+func (c Customer) IsValidPhone() bool {
+	return true
+}
+
