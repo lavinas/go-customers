@@ -14,6 +14,10 @@ const (
 	cpf_max_length        = 12
 	cnpj_min_length       = 12
 	cnpj_max_length       = 16
+	email_min_length      = 3
+	email_max_length      = 254
+	email_regex           = "^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]" +
+		                    "{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
 )
 
 // Customer represents basic informations of a Costumer
@@ -148,12 +152,13 @@ func (c Customer) IsValidEmail() bool {
 	if c.Email == "" {
 		return false
 	}
-	// validate structure
+	// validate length
 	e := c.Email
-	if len(e) < 3 && len(e) > 254 {
+	if len(e) < email_min_length && len(e) > email_max_length {
 		return false
 	}
-	var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	// validate structure
+	var emailRegex = regexp.MustCompile(email_regex)
 	if !emailRegex.MatchString(e) {
 		return false
 	}
