@@ -2,10 +2,12 @@ package domain
 
 import (
 	"math"
-	"strconv"
-	"strings"
 	"net"
 	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/dongri/phonenumber"
 )
 
 const (
@@ -17,7 +19,8 @@ const (
 	email_min_length      = 3
 	email_max_length      = 254
 	email_regex           = "^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]" +
-		                    "{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+		"{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+	default_country = "BR"
 )
 
 // Customer represents basic informations of a Costumer
@@ -25,28 +28,32 @@ const (
 // A Custumer is the security principal for this application.
 // It's also used as one of main axes for reporting.
 //
-// A Constumer can have links with whom they can be connected in some form.
+// A Customer can have links with whom they can be connected in some form.
 //
 // swagger:model
 type Customer struct {
-	// the id for this client
+	// the id for this customer
 	// required: true
 	Id uint64 `json:"id"`
-	// the name for this client
+	// the name for this customer
 	// required: true
 	Name string `json:"name"`
-	// the document number for this client
-	// required: false
+	// the document number for this customer
+	// required: depends on system configuration
 	Document uint64 `json:"document"`
-	// the email address for this client
-	// required: true
+	// the email address for this custumer
+	// required: depends on system configuration
 	// example: user@provider.net
 	Email string `json:"email"`
-	// the cell number for this client in the i164 pattern
+	// the phone country of this customer(uses ISO3166 country code)
 	// required: false
-	Phone uint64 `json:"phone"`
-	// the unified master password for this Custumer
-	// required: false
+	// it's assume default country of running system
+	PhoneCountry string `json:"phone_country"`
+	// the phone number for this customer
+	// required: depends on system configuration
+	PhoneNumber uint64 `json:"phone_number"`
+	// the unified master password for this customer
+	// required: depends on system configuration
 	Password string `json:"password"`
 }
 
@@ -55,9 +62,9 @@ func (c Customer) Validate() error {
 	return nil
 }
 
-// Validate customer name. 
+// Validate customer name.
 // It should have more than a word and the first and last name should have more than a char
-func (c Customer) IsValidName() bool {
+func (c *Customer) IsValidName() bool {
 	// validate if it is not blank
 	if c.Name == "" {
 		return false
@@ -78,7 +85,7 @@ func (c Customer) IsValidName() bool {
 
 // Verify if document is a valid brasilian CPF (private individual document)
 // It validate two last digits with mod 11 algorithm
-func (c Customer) IsDocumentCPF() bool {
+func (c *Customer) IsDocumentCPF() bool {
 	// valid is not zero
 	if c.Document == 0 {
 		return false
@@ -89,8 +96,8 @@ func (c Customer) IsDocumentCPF() bool {
 		return false
 	}
 	// valid check digits (2 last digits)
-	dig1 := int(c.Document%100/10)
-	dig2 := int(c.Document%10)
+	dig1 := int(c.Document % 100 / 10)
+	dig2 := int(c.Document % 10)
 	val1 := 0
 	val2 := 0
 	for i := 3; i <= len; i++ {
@@ -106,7 +113,7 @@ func (c Customer) IsDocumentCPF() bool {
 
 // Verify if document is a valid brasilian CNPJ (legal entity document)
 // It validate two last digits with mod 11 algorithm
-func (c Customer) IsDocumentCNPJ() bool {
+func (c *Customer) IsDocumentCNPJ() bool {
 	// valid is not zero
 	if c.Document == 0 {
 		return false
@@ -117,11 +124,11 @@ func (c Customer) IsDocumentCNPJ() bool {
 		return false
 	}
 	// valid check digits (2 last digits)
-	dig1 := int(c.Document%100/10)
-	dig2 := int(c.Document%10)
+	dig1 := int(c.Document % 100 / 10)
+	dig2 := int(c.Document % 10)
 	val1 := 0
 	val2 := 0
-	for i := 0; i <= len - 3; i++ {
+	for i := 0; i <= len-3; i++ {
 		x := int(math.Mod(float64(c.Document), math.Pow10(i+3)) / math.Pow10(i+2))
 		val1 += x * (int(math.Mod(float64(i), float64(8))) + 2)
 		val2 += x * (int(math.Mod(float64(i+1), float64(8))) + 2)
@@ -132,7 +139,7 @@ func (c Customer) IsDocumentCNPJ() bool {
 	if val1 < 2 {
 		val1 = 0
 	}
-	if val2 < 2{
+	if val2 < 2 {
 		val2 = 0
 	}
 	val1 = 11 - val1
@@ -141,14 +148,14 @@ func (c Customer) IsDocumentCNPJ() bool {
 }
 
 // Validate customer document
-// It should be a Brasilian CPF(private individual document) or a CNPJ(legal entity document) 
-func (c Customer) IsValidDocument() bool {
+// It should be a Brasilian CPF(private individual document) or a CNPJ(legal entity document)
+func (c *Customer) IsValidDocument() bool {
 	return c.IsDocumentCPF() || c.IsDocumentCNPJ()
 }
 
 // Validate customer email address string
-func (c Customer) IsValidEmail() bool {
-		// validate if it is not blank
+func (c *Customer) IsValidEmail() bool {
+	// validate if it is not blank
 	if c.Email == "" {
 		return false
 	}
@@ -170,8 +177,40 @@ func (c Customer) IsValidEmail() bool {
 	return true
 }
 
-// Validate phone number
-func (c Customer) IsValidPhone() bool {
-	return true
+// Return full valid number of Custumer.
+func (c *Customer) GetValidPhoneNumber() string {
+	country := c.PhoneCountry
+	if country == "" {
+		country = default_country
+	}
+	return phonenumber.Parse(strconv.FormatUint(c.PhoneNumber, 10), country)
 }
 
+// Validate phone number
+func (c *Customer) IsValidPhone() bool {
+	return c.GetValidPhoneNumber() != ""
+}
+
+// Sort valid phone number in Customer object
+func (c *Customer) SetValidPhone() {
+	if c.PhoneNumber == 0 {
+		c.PhoneCountry = ""
+		return
+	}
+	valid := c.GetValidPhoneNumber()
+	if valid == "" {
+		c.PhoneCountry = ""
+		c.PhoneNumber = 0
+		return
+	}
+	number, err := strconv.ParseUint(valid, 10, 64)
+	if err != nil {
+		c.PhoneCountry = ""
+		c.PhoneNumber = 0
+		return
+	}
+	c.PhoneNumber = number
+	if c.PhoneCountry == "" {
+		c.PhoneCountry = default_country
+	}
+}
