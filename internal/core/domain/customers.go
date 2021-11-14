@@ -45,7 +45,7 @@ type Customer struct {
 	// required: depends on system configuration
 	// example: user@provider.net
 	Email string `json:"email"`
-	// the phone country of this customer(uses ISO3166 country code)
+	// the phone country of this customer(uses ISO3166 country code with two digits)
 	// required: false
 	// it's assume default country of running system
 	PhoneCountry string `json:"phone_country"`
@@ -177,40 +177,55 @@ func (c *Customer) IsValidEmail() bool {
 	return true
 }
 
-// Return full valid number of Custumer.
-func (c *Customer) GetValidPhoneNumber() string {
+// Return full valid number and country code of the number
+// if customer has a valid number and/or country
+// If has an invalid number and/or contry than (0, "") is returned
+func (c *Customer) GetFormatedPhone() (uint64, string) {
+	// check non nil number
+	if c.PhoneNumber == 0 {
+		return 0, ""
+	}
+	// try to find country of phone number
 	country := c.PhoneCountry
 	if country == "" {
-		country = default_country
+		iso := phonenumber.GetISO3166ByNumber(strconv.FormatUint(c.PhoneNumber, 10), false)
+		if iso.Alpha2 == "" {
+			country = default_country
+		} else {
+			country = iso.Alpha2
+		}
 	}
-	return phonenumber.Parse(strconv.FormatUint(c.PhoneNumber, 10), country)
+	// try to format number
+	var u uint64
+	var err error
+	var sn string = phonenumber.Parse(strconv.FormatUint(c.PhoneNumber, 10), country)
+	u, err = strconv.ParseUint(sn, 10, 64)
+	if err != nil {
+		return 0, ""
+	}
+	return u, country
 }
 
-// Validate phone number
+// Validate phone number or/and country
 func (c *Customer) IsValidPhone() bool {
-	return c.GetValidPhoneNumber() != ""
+	var nilNum uint64 = 0
+	n, _ := c.GetFormatedPhone()
+	return n != nilNum
 }
 
-// Sort valid phone number in Customer object
-func (c *Customer) SetValidPhone() {
+// Replace number and country phone of custumer with country prefix if it has a valid number
+// if there is an error in phone number or country, both will be replaced to nil
+func (c *Customer) FormatPhone() {
 	if c.PhoneNumber == 0 {
 		c.PhoneCountry = ""
 		return
 	}
-	valid := c.GetValidPhoneNumber()
-	if valid == "" {
-		c.PhoneCountry = ""
-		c.PhoneNumber = 0
-		return
-	}
-	number, err := strconv.ParseUint(valid, 10, 64)
-	if err != nil {
+	number, country := c.GetFormatedPhone()
+	if number == 0 {
 		c.PhoneCountry = ""
 		c.PhoneNumber = 0
 		return
 	}
 	c.PhoneNumber = number
-	if c.PhoneCountry == "" {
-		c.PhoneCountry = default_country
-	}
+	c.PhoneCountry = country
 }

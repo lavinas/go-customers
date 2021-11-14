@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	number := phonenumber.ParseWithLandLine("11998987666", "BR")
+	number := phonenumber.GetISO3166ByNumber("447400123456", false)
 	fmt.Println(number)
 }
