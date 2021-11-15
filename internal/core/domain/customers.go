@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"math"
 	"net"
 	"regexp"
@@ -57,31 +58,33 @@ type Customer struct {
 	Password string `json:"password"`
 }
 
-// Validate is a Client method that validate if the fields are in the right expected format
-func (c Customer) Validate() error {
-	return nil
-}
-
 // Validate customer name.
 // It should have more than a word and the first and last name should have more than a char
-func (c *Customer) IsValidName() bool {
+func (c *Customer) ValidateName() error {
 	// validate if it is not blank
 	if c.Name == "" {
-		return false
+		return errors.New("name should no be Nil")
 	}
 	// validade more than one name and the first and last have more then a char
 	s := strings.Split(c.Name, " ")
 	if len(s) < 2 {
-		return false
+		return errors.New("name should have at least two words")
 	}
 	if len(s[0]) < 2 {
-		return false
+		return errors.New("nirst name should have at least two letters")
 	}
 	if len(s[len(s)-1]) < 2 {
-		return false
+		return errors.New("last name should have at least two letters")
 	}
-	return true
+	return nil
 }
+
+// Format Name of custumer characteres
+func (c *Customer) FormatName() {
+	if c.ValidateName() != nil {
+		c.Name = strings.Title(strings.ToLower(c.Name))
+	}
+} 
 
 // Verify if document is a valid brasilian CPF (private individual document)
 // It validate two last digits with mod 11 algorithm
@@ -108,7 +111,11 @@ func (c *Customer) IsDocumentCPF() bool {
 	val2 += dig1 * 2
 	val1 = int(math.Mod(float64(val1*10), float64(11)))
 	val2 = int(math.Mod(float64(val2*10), float64(11)))
-	return val1 == dig1 && val2 == dig2
+	if val1 != dig1 || val2 != dig2 {
+		return  false
+	}
+	// Ok
+	return true
 }
 
 // Verify if document is a valid brasilian CNPJ (legal entity document)
@@ -144,37 +151,44 @@ func (c *Customer) IsDocumentCNPJ() bool {
 	}
 	val1 = 11 - val1
 	val2 = 11 - val2
-	return val1 == dig1 && val2 == dig2
+	if val1 != dig1 || val2 != dig2 {
+		return false
+	}
+	// Ok
+	return true
 }
 
 // Validate customer document
 // It should be a Brasilian CPF(private individual document) or a CNPJ(legal entity document)
-func (c *Customer) IsValidDocument() bool {
-	return c.IsDocumentCPF() || c.IsDocumentCNPJ()
+func (c *Customer) ValidateDocument() error {
+	if !c.IsDocumentCPF() && !c.IsDocumentCNPJ() {
+		return errors.New("document should have a CPF or CNPJ number")
+	}
+	return nil
 }
 
 // Validate customer email address string
-func (c *Customer) IsValidEmail() bool {
+func (c *Customer) ValidateEmail() error {
 	// validate if it is not blank
 	if c.Email == "" {
-		return false
+		return errors.New("email should have a valid email address format")
 	}
 	// validate length
 	e := c.Email
 	if len(e) < email_min_length && len(e) > email_max_length {
-		return false
+		return errors.New("email should have a valid email address format")
 	}
 	// validate structure
 	var emailRegex = regexp.MustCompile(email_regex)
 	if !emailRegex.MatchString(e) {
-		return false
+		return errors.New("email should have a valid email address format")
 	}
 	parts := strings.Split(e, "@")
 	mx, err := net.LookupMX(parts[1])
 	if err != nil || len(mx) == 0 {
-		return false
+		return errors.New("email should have a valid email address format")
 	}
-	return true
+	return nil
 }
 
 // Return full valid number and country code of the number
@@ -207,10 +221,13 @@ func (c *Customer) GetFormatedPhone() (uint64, string) {
 }
 
 // Validate phone number or/and country
-func (c *Customer) IsValidPhone() bool {
+func (c *Customer) ValidatePhone() error {
 	var nilNum uint64 = 0
 	n, _ := c.GetFormatedPhone()
-	return n != nilNum
+	if n == nilNum {
+		return errors.New("PhoneNumber should have a valid phone number format")
+	}
+	return nil
 }
 
 // Replace number and country phone of custumer with country prefix if it has a valid number

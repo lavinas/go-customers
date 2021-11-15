@@ -14,16 +14,43 @@ func TestConstant(t *testing.T) {
 
 func TestIsValidName(t *testing.T) {
 	var c = Customer{}
-	x := c.IsValidName()
-	assert.False(t, x)
+	err := c.ValidateName()
+	assert.NotNil(t, err)
 
 	c = Customer{Name: "Test Name"}
-	x = c.IsValidName()
-	assert.True(t, x)
+	err = c.ValidateName()
+	assert.Nil(t, err)
 	
 	c = Customer{Name: ""}
-	x = c.IsValidName()
-	assert.False(t, x)
+	err = c.ValidateName()
+	assert.NotNil(t, err)
+
+	c = Customer{Name: "Test"}
+	err = c.ValidateName()
+	assert.NotNil(t, err)
+}
+
+func TestFormatName(t *testing.T) {
+	var c = Customer{}
+	c.FormatName()
+	assert.Equal(t, "", c.Name)
+
+	c = Customer{Name: "Test Name"}
+	c.FormatName()
+	assert.Equal(t, "Test Name", c.Name)
+
+	c = Customer{Name: ""}
+	c.FormatName()
+	assert.Equal(t, "", c.Name)
+
+	c = Customer{Name: "test name"}
+	c.FormatName()
+	assert.Equal(t, "Test Name", c.Name)
+
+	c = Customer{Name: "test"}
+	c.FormatName()
+	assert.Equal(t, "", c.Name)
+
 }
 
 func TestIsDocumentCPF(t *testing.T) {
@@ -62,7 +89,7 @@ func TestIsDocumentCNPJ(t *testing.T) {
 	assert.True(t, x)
 }
 
-func TestIsValidDocument(t *testing.T) {
+func TestValidateDocument(t *testing.T) {
 	var c = Customer{Document: 66946202848}
 	x := c.IsDocumentCPF()
 	assert.True(t, x)
