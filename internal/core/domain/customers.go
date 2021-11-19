@@ -80,10 +80,12 @@ func (c *Customer) ValidateName() error {
 }
 
 // Format Name of custumer characteres
-func (c *Customer) FormatName() {
-	if c.ValidateName() != nil {
-		c.Name = strings.Title(strings.ToLower(c.Name))
+func (c *Customer) FormatName() error {
+	if err := c.ValidateName(); err != nil {
+		return err
 	}
+	c.Name = strings.Title(strings.ToLower(c.Name))
+	return nil
 } 
 
 // Verify if document is a valid brasilian CPF (private individual document)

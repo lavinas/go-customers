@@ -31,25 +31,30 @@ func TestIsValidName(t *testing.T) {
 }
 
 func TestFormatName(t *testing.T) {
-	var c = Customer{}
-	c.FormatName()
+	c := Customer{}
+	err := c.FormatName()
+	assert.NotNil(t, err)
 	assert.Equal(t, "", c.Name)
 
 	c = Customer{Name: "Test Name"}
-	c.FormatName()
+	err = c.FormatName()
+	assert.Nil(t, err)
 	assert.Equal(t, "Test Name", c.Name)
 
 	c = Customer{Name: ""}
-	c.FormatName()
+	err = c.FormatName()
+	assert.NotNil(t, err)
 	assert.Equal(t, "", c.Name)
 
 	c = Customer{Name: "test name"}
-	c.FormatName()
+	err = c.FormatName()
+	assert.Nil(t, err)
 	assert.Equal(t, "Test Name", c.Name)
 
 	c = Customer{Name: "test"}
-	c.FormatName()
-	assert.Equal(t, "", c.Name)
+	err = c.FormatName()
+	assert.NotNil(t, err)
+	assert.Equal(t, "test", c.Name)
 
 }
 
@@ -91,46 +96,46 @@ func TestIsDocumentCNPJ(t *testing.T) {
 
 func TestValidateDocument(t *testing.T) {
 	var c = Customer{Document: 66946202848}
-	x := c.IsDocumentCPF()
-	assert.True(t, x)
+	x := c.ValidateDocument()
+	assert.Nil(t, x)
 	
 	c = Customer{Document: 74112977000137}
-	x = c.IsDocumentCNPJ()
-	assert.True(t, x)
+	x = c.ValidateDocument()
+	assert.Nil(t, x)
 	
 	c = Customer{Document: 11222333000182}
-	x = c.IsDocumentCNPJ()
-	assert.False(t, x)
+	x = c.ValidateDocument()
+	assert.NotNil(t, x)
 	
 	c = Customer{Document: 66946202818}
-	x = c.IsDocumentCPF()
-	assert.False(t, x)
+	x = c.ValidateDocument()
+	assert.NotNil(t, x)
 }
 
 func TestIsValidEmail(t *testing.T) {
 	var c = Customer{Email: "teste@gmail.com"}
-	x := c.IsValidEmail()
-	assert.True(t, x)
+	x := c.ValidateEmail()
+	assert.Nil(t, x)
 	
 	c = Customer{Email: "teste"}
-	x = c.IsValidEmail()
-	assert.False(t, x)
+	x = c.ValidateEmail()
+	assert.NotNil(t, x)
 	
 	c = Customer{Email: "teste@"}
-	x = c.IsValidEmail()
-	assert.False(t, x)
+	x = c.ValidateEmail()
+	assert.NotNil(t, x)
 	
 	c = Customer{Email: "teste@g"}
-	x = c.IsValidEmail()
-	assert.False(t, x)
+	x = c.ValidateEmail()
+	assert.NotNil(t, x)
 	
 	c = Customer{Email: "teste@g.r"}
-	x = c.IsValidEmail()
-	assert.False(t, x)
+	x = c.ValidateEmail()
+	assert.NotNil(t, x)
 	
 	c = Customer{Email: "lavinas@me.com"}
-	x = c.IsValidEmail()
-	assert.True(t, x)
+	x = c.ValidateEmail()
+	assert.Nil(t, x)
 }
 
 func TestGetFormatedPhone(t *testing.T) {
@@ -220,43 +225,43 @@ func TestGetFormatedPhone(t *testing.T) {
 
 func TestIsValidaPhone(t *testing.T) {
 	var c = Customer{PhoneNumber: 1197776755}
-	x := c.IsValidPhone()
-	assert.True(t, x)
+	x := c.ValidatePhone()
+	assert.Nil(t, x)
 
 	c = Customer{PhoneNumber: 97776755}
-	x = c.IsValidPhone()
-	assert.False(t, x)
+	x = c.ValidatePhone()
+	assert.NotNil(t, x)
 	
 	c = Customer{PhoneNumber: 551197776755}
-	x = c.IsValidPhone()
-	assert.True(t, x)
+	x = c.ValidatePhone()
+	assert.Nil(t, x)
 	
 	c = Customer{PhoneNumber: 551197776755, PhoneCountry: "US"}
-	x = c.IsValidPhone()
-	assert.False(t, x)
+	x = c.ValidatePhone()
+	assert.NotNil(t, x)
 	
 	c = Customer{PhoneNumber: 2015550123, PhoneCountry: "US"}
-	x = c.IsValidPhone()
-	assert.True(t, x)
+	x = c.ValidatePhone()
+	assert.Nil(t, x)
 	
 	c = Customer{PhoneNumber: 12015550123, PhoneCountry: "US"}
-	x = c.IsValidPhone()
-	assert.True(t, x)
+	x = c.ValidatePhone()
+	assert.Nil(t, x)
 	
 	c = Customer{PhoneNumber: 7400123456, PhoneCountry: "GB"}
-	x = c.IsValidPhone()
-	assert.True(t, x)
+	x = c.ValidatePhone()
+	assert.Nil(t, x)
 	
 	c = Customer{PhoneNumber: 447400123456, PhoneCountry: "GB"}
-	x = c.IsValidPhone()
-	assert.True(t, x)
+	x = c.ValidatePhone()
+	assert.Nil(t, x)
 	
 	c = Customer{PhoneNumber: 1197776755, PhoneCountry: "XY"}
-	x = c.IsValidPhone()
-	assert.False(t, x)
+	x = c.ValidatePhone()
+	assert.NotNil(t, x)
 }
 
-func TestFormat(t *testing.T) {
+func TestFormatPhone(t *testing.T) {
 	var c = Customer{PhoneNumber: 1197776755}
 	var u uint64
 	c.FormatPhone()
