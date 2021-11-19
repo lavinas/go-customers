@@ -3,7 +3,9 @@ package domain
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"	
+	"github.com/stretchr/testify/assert"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestConstant(t *testing.T) {
@@ -309,4 +311,52 @@ func TestFormatPhone(t *testing.T) {
 	assert.Equal(t, "", c.PhoneCountry)
 	assert.Equal(t, u, c.PhoneNumber)
 }
+
+func TestNewCustomer(t *testing.T) {
+	c := NewCustomer()
+	_, err := uuid.Parse(c.Id)
+	var zeroUInt64 uint64 = 0 
+	assert.Nil(t, err)
+	assert.Equal(t, c.Name, "")
+	assert.Equal(t, c.Document, zeroUInt64)
+	assert.Equal(t, c.Email, "")
+	assert.Equal(t, c.PhoneCountry, "")
+	assert.Equal(t, c.PhoneNumber, zeroUInt64)
+	assert.Equal(t, c.Password, "")
+}
+
+func TestIsPasswordCrypted(t *testing.T) {
+	var c = Customer{Password: "xxxsasssadsa"}
+	i := c.IsPasswordCrypted()
+	assert.False(t, i)
+	c.FormatPassword()
+	i = c.IsPasswordCrypted()
+	assert.True(t, i)
+	
+}
+
+func TestValidatePassword(t *testing.T) {
+	var c = Customer{}
+	err := c.ValidatePassword()
+	assert.NotNil(t, err)
+	c = Customer{Password: "uwquweeuwuewue"}
+	err = c.ValidatePassword()
+	assert.Nil(t, err)
+}
+
+
+func TestFormatPassword(t *testing.T) {
+	var c = Customer{Password: "xxxsasssadsa"}
+	err := c.FormatPassword()
+	assert.Nil(t, err)
+	err = bcrypt.CompareHashAndPassword([]byte(c.Password), []byte("xxxsasssadsa"))
+	assert.Nil(t, err)
+	err = bcrypt.CompareHashAndPassword([]byte(c.Password), []byte("xxxsasssadsab"))
+	assert.NotNil(t, err)
+	err = c.FormatPassword()
+	assert.NotNil(t, err)
+}
+
+
+
 

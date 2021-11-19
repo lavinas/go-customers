@@ -1,12 +1,14 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
-
-	"github.com/dongri/phonenumber"
 )
 
 func main() {
-	number := phonenumber.GetISO3166ByNumber("447400123456", false)
-	fmt.Println(number)
+	var x string = "absgtttdtd"
+	z := sha256.Sum256([]byte(x))
+	y := string(z[:])
+	fmt.Println(y)
+
 }

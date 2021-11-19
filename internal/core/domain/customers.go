@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/dongri/phonenumber"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -35,7 +37,7 @@ const (
 type Customer struct {
 	// the id for this customer
 	// required: true
-	Id uint64 `json:"id"`
+	Id string `json:"id"`
 	// the name for this customer
 	// required: true
 	Name string `json:"name"`
@@ -56,6 +58,11 @@ type Customer struct {
 	// the unified master password for this customer
 	// required: depends on system configuration
 	Password string `json:"password"`
+}
+
+func NewCustomer() *Customer {
+	id := uuid.New()
+	return &Customer{Id: id.String()}
 }
 
 // Validate customer name.
@@ -247,4 +254,37 @@ func (c *Customer) FormatPhone() {
 	}
 	c.PhoneNumber = number
 	c.PhoneCountry = country
+}
+
+func (c *Customer) IsPasswordCrypted() bool {
+	if c.Password == "" {
+		return false
+	}
+	cost, err := bcrypt.Cost([]byte(c.Password))
+	if err != nil {
+		return false
+	}
+	return cost == bcrypt.DefaultCost
+}
+
+func (c *Customer) ValidatePassword() error {
+	if c.Password == "" {
+		return errors.New("password should not by empty")
+	}
+	if c.IsPasswordCrypted() {
+		return errors.New("password already crypted")
+	}
+	return nil
+}
+
+func (c *Customer) FormatPassword() error {
+	if err := c.ValidatePassword(); err != nil {
+		return err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(c.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	c.Password = string(hash)
+	return nil
 }
