@@ -9,7 +9,10 @@ import (
 )
 
 func TestConstant(t *testing.T) {
-	assert.Equal(t, env_validate_document, "REQUIRE_DOCUMENT")
+	assert.Equal(t, env_required_document, "REQUIRED_DOCUMENT")
+	assert.Equal(t, env_required_email, "REQUIRED_EMAIL")
+	assert.Equal(t, env_required_phone, "REQUIRED_PHONE")
+	assert.Equal(t, env_required_password, "REQUIRED_PASSWORD")
 	assert.Equal(t, 8, cpf_min_length)
 	assert.Equal(t, 12, cpf_max_length)
 }
@@ -329,7 +332,7 @@ func TestIsPasswordCrypted(t *testing.T) {
 	var c = Customer{Password: "xxxsasssadsa"}
 	i := c.IsPasswordCrypted()
 	assert.False(t, i)
-	c.FormatPassword()
+	c.CryptPassword()
 	i = c.IsPasswordCrypted()
 	assert.True(t, i)
 	
@@ -347,16 +350,14 @@ func TestValidatePassword(t *testing.T) {
 
 func TestFormatPassword(t *testing.T) {
 	var c = Customer{Password: "xxxsasssadsa"}
-	err := c.FormatPassword()
+	err := c.CryptPassword()
 	assert.Nil(t, err)
 	err = bcrypt.CompareHashAndPassword([]byte(c.Password), []byte("xxxsasssadsa"))
 	assert.Nil(t, err)
 	err = bcrypt.CompareHashAndPassword([]byte(c.Password), []byte("xxxsasssadsab"))
 	assert.NotNil(t, err)
-	err = c.FormatPassword()
+	err = c.CryptPassword()
 	assert.NotNil(t, err)
 }
-
-
 
 

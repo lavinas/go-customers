@@ -14,8 +14,11 @@ import (
 )
 
 const (
-	env_validate_document = "REQUIRE_DOCUMENT"
-	cpf_min_length        = 8
+	env_required_document = "REQUIRED_DOCUMENT" // CPF, CNPJ or BOTH (CPF and CNPJ)
+	env_required_email    = "REQUIRED_EMAIL"    // YeS or No
+	env_required_phone    = "REQUIRED_PHONE"    // Yes or No
+	env_required_password = "REQUIRED_PASSWORD" // Yes or No
+	cpf_min_length        = 8                   
 	cpf_max_length        = 12
 	cnpj_min_length       = 12
 	cnpj_max_length       = 16
@@ -63,6 +66,24 @@ type Customer struct {
 func NewCustomer() *Customer {
 	id := uuid.New()
 	return &Customer{Id: id.String()}
+}
+
+// Validate fielfs of customer according to environment configuration
+// Id and Name will be necessary compulsory, but others fields could be
+// necessary if there is a envireiment configuration requiring it
+func (c *Customer) Validate() error {
+	return nil
+}
+
+func (c *Customer) Format() error {
+	return nil
+}
+
+// Validate if id is not null and has a valid hash
+func (c *Customer) ValidateId() error {
+
+
+	return nil
 }
 
 // Validate customer name.
@@ -256,6 +277,7 @@ func (c *Customer) FormatPhone() {
 	c.PhoneCountry = country
 }
 
+// Verify if Password is alredy crypted or it is in plan text
 func (c *Customer) IsPasswordCrypted() bool {
 	if c.Password == "" {
 		return false
@@ -267,6 +289,7 @@ func (c *Customer) IsPasswordCrypted() bool {
 	return cost == bcrypt.DefaultCost
 }
 
+// Verify if Password is valid
 func (c *Customer) ValidatePassword() error {
 	if c.Password == "" {
 		return errors.New("password should not by empty")
@@ -277,7 +300,8 @@ func (c *Customer) ValidatePassword() error {
 	return nil
 }
 
-func (c *Customer) FormatPassword() error {
+// Cripto Password field
+func (c *Customer) CryptPassword() error {
 	if err := c.ValidatePassword(); err != nil {
 		return err
 	}
@@ -288,3 +312,4 @@ func (c *Customer) FormatPassword() error {
 	c.Password = string(hash)
 	return nil
 }
+
