@@ -18,7 +18,7 @@ const (
 	env_required_email    = "REQUIRED_EMAIL"    // YeS or No
 	env_required_phone    = "REQUIRED_PHONE"    // Yes or No
 	env_required_password = "REQUIRED_PASSWORD" // Yes or No
-	cpf_min_length        = 8                   
+	cpf_min_length        = 8
 	cpf_max_length        = 12
 	cnpj_min_length       = 12
 	cnpj_max_length       = 16
@@ -64,14 +64,25 @@ type Customer struct {
 }
 
 func NewCustomer() *Customer {
-	id := uuid.New()
-	return &Customer{Id: id.String()}
+	id := uuid.NewString()
+	return &Customer{Id: id}
 }
 
-// Validate fielfs of customer according to environment configuration
-// Id and Name will be necessary compulsory, but others fields could be
-// necessary if there is a envireiment configuration requiring it
+// Validate fields of customer according to environment configuration
+// Id and Name are compulsory, but others fields could be
+// necessary if there is a environment configuration requiring it
 func (c *Customer) Validate() error {
+	var retErr string = ""
+	if err := c.ValidateId(); err != nil {
+		retErr += err.Error() + "; "  
+	}
+	if err := c.ValidateName(); err != nil {
+		retErr += err.Error() + "; "
+	}
+	if retErr != "" {
+		retErr = "Customers error(s): " + retErr
+		return errors.New(retErr)
+	}
 	return nil
 }
 
@@ -81,8 +92,17 @@ func (c *Customer) Format() error {
 
 // Validate if id is not null and has a valid hash
 func (c *Customer) ValidateId() error {
-
-
+	if c.Id == "" {
+		return errors.New("id should not be empty")
+	}
+	if _, err := uuid.Parse(c.Id); err != nil {
+		return errors.New("id should be a valid uuid")
+	}
+	reg := regexp.MustCompile("-")
+	mat := reg.FindAllStringIndex(c.Id, -1)
+	if len(mat) != 4 {
+		return errors.New("id should have - character inside")
+	}
 	return nil
 }
 
@@ -91,7 +111,7 @@ func (c *Customer) ValidateId() error {
 func (c *Customer) ValidateName() error {
 	// validate if it is not blank
 	if c.Name == "" {
-		return errors.New("name should no be Nil")
+		return errors.New("name should no be empty")
 	}
 	// validade more than one name and the first and last have more then a char
 	s := strings.Split(c.Name, " ")
@@ -114,7 +134,7 @@ func (c *Customer) FormatName() error {
 	}
 	c.Name = strings.Title(strings.ToLower(c.Name))
 	return nil
-} 
+}
 
 // Verify if document is a valid brasilian CPF (private individual document)
 // It validate two last digits with mod 11 algorithm
@@ -142,7 +162,7 @@ func (c *Customer) IsDocumentCPF() bool {
 	val1 = int(math.Mod(float64(val1*10), float64(11)))
 	val2 = int(math.Mod(float64(val2*10), float64(11)))
 	if val1 != dig1 || val2 != dig2 {
-		return  false
+		return false
 	}
 	// Ok
 	return true
@@ -312,4 +332,3 @@ func (c *Customer) CryptPassword() error {
 	c.Password = string(hash)
 	return nil
 }
-

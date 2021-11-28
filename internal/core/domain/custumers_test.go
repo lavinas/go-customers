@@ -3,8 +3,8 @@ package domain
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,6 +17,27 @@ func TestConstant(t *testing.T) {
 	assert.Equal(t, 12, cpf_max_length)
 }
 
+func TestValidId(t *testing.T) {
+	var c = Customer{}
+	err := c.ValidateId()
+	assert.NotNil(t, err)
+	c = *NewCustomer()
+	err = c.ValidateId()
+	assert.Nil(t, err)
+	c = Customer{Id: "cf357e70-7dc9-4e73-8323-f9ae2be36f4a"}
+	err = c.ValidateId()
+	assert.Nil(t, err)
+	c = Customer{Id: "cf357e70-7dc9-4e73-8323-f9ae2be36f"}
+	err = c.ValidateId()
+	assert.NotNil(t, err)
+	c = Customer{Id: "cf357e707dc94e738323f9ae2be36f4a"}
+	err = c.ValidateId()
+	assert.NotNil(t, err)
+	c = Customer{Id: "cf357e707dc9-4e73-8323-f9ae2be36f"}
+	err = c.ValidateId()
+	assert.NotNil(t, err)
+}
+
 func TestIsValidName(t *testing.T) {
 	var c = Customer{}
 	err := c.ValidateName()
@@ -25,7 +46,7 @@ func TestIsValidName(t *testing.T) {
 	c = Customer{Name: "Test Name"}
 	err = c.ValidateName()
 	assert.Nil(t, err)
-	
+
 	c = Customer{Name: ""}
 	err = c.ValidateName()
 	assert.NotNil(t, err)
@@ -67,15 +88,15 @@ func TestIsDocumentCPF(t *testing.T) {
 	var c = Customer{Document: 66946202848}
 	x := c.IsDocumentCPF()
 	assert.True(t, x)
-	
+
 	c = Customer{Document: 66946202818}
 	x = c.IsDocumentCPF()
 	assert.False(t, x)
-	
+
 	c = Customer{Document: 66946202840}
 	x = c.IsDocumentCPF()
 	assert.False(t, x)
-	
+
 	c = Customer{Document: 1587547007}
 	x = c.IsDocumentCPF()
 	assert.True(t, x)
@@ -85,15 +106,15 @@ func TestIsDocumentCNPJ(t *testing.T) {
 	var c = Customer{Document: 11222333000181}
 	x := c.IsDocumentCNPJ()
 	assert.True(t, x)
-	
+
 	c = Customer{Document: 11222333000171}
 	x = c.IsDocumentCNPJ()
 	assert.False(t, x)
-	
+
 	c = Customer{Document: 11222333000182}
 	x = c.IsDocumentCNPJ()
 	assert.False(t, x)
-	
+
 	c = Customer{Document: 74112977000137}
 	x = c.IsDocumentCNPJ()
 	assert.True(t, x)
@@ -103,15 +124,15 @@ func TestValidateDocument(t *testing.T) {
 	var c = Customer{Document: 66946202848}
 	x := c.ValidateDocument()
 	assert.Nil(t, x)
-	
+
 	c = Customer{Document: 74112977000137}
 	x = c.ValidateDocument()
 	assert.Nil(t, x)
-	
+
 	c = Customer{Document: 11222333000182}
 	x = c.ValidateDocument()
 	assert.NotNil(t, x)
-	
+
 	c = Customer{Document: 66946202818}
 	x = c.ValidateDocument()
 	assert.NotNil(t, x)
@@ -121,23 +142,23 @@ func TestIsValidEmail(t *testing.T) {
 	var c = Customer{Email: "teste@gmail.com"}
 	x := c.ValidateEmail()
 	assert.Nil(t, x)
-	
+
 	c = Customer{Email: "teste"}
 	x = c.ValidateEmail()
 	assert.NotNil(t, x)
-	
+
 	c = Customer{Email: "teste@"}
 	x = c.ValidateEmail()
 	assert.NotNil(t, x)
-	
+
 	c = Customer{Email: "teste@g"}
 	x = c.ValidateEmail()
 	assert.NotNil(t, x)
-	
+
 	c = Customer{Email: "teste@g.r"}
 	x = c.ValidateEmail()
 	assert.NotNil(t, x)
-	
+
 	c = Customer{Email: "lavinas@me.com"}
 	x = c.ValidateEmail()
 	assert.Nil(t, x)
@@ -236,31 +257,31 @@ func TestIsValidaPhone(t *testing.T) {
 	c = Customer{PhoneNumber: 97776755}
 	x = c.ValidatePhone()
 	assert.NotNil(t, x)
-	
+
 	c = Customer{PhoneNumber: 551197776755}
 	x = c.ValidatePhone()
 	assert.Nil(t, x)
-	
+
 	c = Customer{PhoneNumber: 551197776755, PhoneCountry: "US"}
 	x = c.ValidatePhone()
 	assert.NotNil(t, x)
-	
+
 	c = Customer{PhoneNumber: 2015550123, PhoneCountry: "US"}
 	x = c.ValidatePhone()
 	assert.Nil(t, x)
-	
+
 	c = Customer{PhoneNumber: 12015550123, PhoneCountry: "US"}
 	x = c.ValidatePhone()
 	assert.Nil(t, x)
-	
+
 	c = Customer{PhoneNumber: 7400123456, PhoneCountry: "GB"}
 	x = c.ValidatePhone()
 	assert.Nil(t, x)
-	
+
 	c = Customer{PhoneNumber: 447400123456, PhoneCountry: "GB"}
 	x = c.ValidatePhone()
 	assert.Nil(t, x)
-	
+
 	c = Customer{PhoneNumber: 1197776755, PhoneCountry: "XY"}
 	x = c.ValidatePhone()
 	assert.NotNil(t, x)
@@ -318,7 +339,7 @@ func TestFormatPhone(t *testing.T) {
 func TestNewCustomer(t *testing.T) {
 	c := NewCustomer()
 	_, err := uuid.Parse(c.Id)
-	var zeroUInt64 uint64 = 0 
+	var zeroUInt64 uint64 = 0
 	assert.Nil(t, err)
 	assert.Equal(t, c.Name, "")
 	assert.Equal(t, c.Document, zeroUInt64)
@@ -335,7 +356,7 @@ func TestIsPasswordCrypted(t *testing.T) {
 	c.CryptPassword()
 	i = c.IsPasswordCrypted()
 	assert.True(t, i)
-	
+
 }
 
 func TestValidatePassword(t *testing.T) {
@@ -346,7 +367,6 @@ func TestValidatePassword(t *testing.T) {
 	err = c.ValidatePassword()
 	assert.Nil(t, err)
 }
-
 
 func TestFormatPassword(t *testing.T) {
 	var c = Customer{Password: "xxxsasssadsa"}
@@ -361,3 +381,14 @@ func TestFormatPassword(t *testing.T) {
 }
 
 
+func TestValidate(t *testing.T) {
+	var c = Customer{}
+	err := c.Validate()
+	assert.NotNil(t, err)
+	c = Customer{Id: "12232", Name:"abc"}
+	err = c.Validate()
+	assert.NotNil(t, err)
+	c = Customer{Id: "cf357e70-7dc9-4e73-8323-f9ae2be36f4a", Name: "Test test"}
+	err = c.Validate()
+	assert.Nil(t, err)
+}
